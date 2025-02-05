@@ -311,7 +311,7 @@ console.log(escaped)
     "GRAPH_STUDENT_UPN_SUFFIX": "@school.domain.com",
     "DEMO_MODE_ENABLED": "true",
     "DEMO_MODE_GLOBAL_MOCK_RESET_PASSWORD": "true",
-    "DEMO_MODE_DEMO_USERS": "{\"12345678910\":{\"DEMO_SSN\":\"10987654321\",\"DEMO_UPN\":\"per.son@domain.com\",\"DEMO_PHONE_NUMBER\":\"+4712345678\",\"MOCK_RESET_PASSWORD\":\"false\"}",
+    "DEMO_MODE_DEMO_USERS": "{\"12345678910\":{\"DEMO_SSN\":\"10987654321\",\"DEMO_UPN\":\"per.son@domain.com\",\"DEMO_PHONE_NUMBER\":\"+4712345678\",\"MOCK_RESET_PASSWORD\":\"false\"}}",
     "KRR_URL": "",
     "KRR_KEY": "",
     "SMS_URL": "",
