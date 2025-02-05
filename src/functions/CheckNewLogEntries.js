@@ -3,7 +3,7 @@ const { checkNewLogEntries } = require('../schedules/check-new-log-entries')
 const { logger } = require('@vtfk/logger')
 
 app.timer('CheckNewLogEntries', {
-  schedule: '*/20 * * * *', // Hvert 20 minutt
+  schedule: '*/20 * * * *',
   handler: async (myTimer, context) => {
     logger('info', ['CheckNewLogEntries - new run'], context)
     try {

@@ -59,10 +59,32 @@ const getAuthenticationMethods = async (userId) => {
  */
 const getUserByCustomSecurityAttributeSsn = async (ssn) => {
   const accessToken = await getMsalToken({ scope: GRAPH.SCOPE })
-  const url = `${GRAPH.URL}/v1.0/users/?$count=true&$select=id,displayName,userPrincipalName,customSecurityAttributes&$filter=customSecurityAttributes/IDM/SSN eq '${ssn}'`
+  const url = `${GRAPH.URL}/v1.0/users/?$filter=(customSecurityAttributes/IDM/SSN eq '${ssn}' and endswith(userPrincipalName, '${GRAPH.STUDENT_UPN_SUFFIX}'))&$select=id,displayName,userPrincipalName,customSecurityAttributes`
   const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${accessToken}`, ConsistencyLevel: 'eventual' } })
   if (data.value.length > 1) {
     throw new Error('Found more than one user on ssn, glitch in the matrix. Delete one of the clones.')
+  }
+  if (data.value.length === 0) {
+    return {
+      id: null,
+      userPrincipalName: null,
+      displayName: null
+    }
+  }
+  return data.value[0]
+}
+
+/**
+ * Get user by FINT ID
+ * @param {string} fintId
+ * @returns {SimpleEntraUser}
+ */
+const getUserByCustomSecurityAttributeFintId = async (fintId) => {
+  const accessToken = await getMsalToken({ scope: GRAPH.SCOPE })
+  const url = `${GRAPH.URL}/v1.0/users/?$count=true&$select=id,displayName,userPrincipalName,customSecurityAttributes&$filter=customSecurityAttributes/IDM/FINT_ID eq '${fintId}'`
+  const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${accessToken}`, ConsistencyLevel: 'eventual' } })
+  if (data.value.length > 1) {
+    throw new Error('Found more than one user on fintId, glitch in the matrix. Delete one of the clones.')
   }
   if (data.value.length === 0) {
     return {
@@ -81,7 +103,7 @@ const getUserByCustomSecurityAttributeSsn = async (ssn) => {
  */
 const getUserByExtensionAttributeSsn = async (ssn) => {
   const accessToken = await getMsalToken({ scope: GRAPH.SCOPE })
-  const url = `${GRAPH.URL}/v1.0/users/?$filter=(${GRAPH.SSN_EXTENSION_ATTRIBUTE}+eq+'${ssn}')&$select=id,displayName,userPrincipalName`
+  const url = `${GRAPH.URL}/v1.0/users/?$filter=(${GRAPH.SSN_EXTENSION_ATTRIBUTE}+eq+'${ssn}' and endswith(userPrincipalName, '${GRAPH.EMPLOYEE_UPN_SUFFIX}'))&$select=id,displayName,userPrincipalName`
   const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${accessToken}` } })
   if (data.value.length > 1) {
     throw new Error('Found more than one user on ssn, glitch in the matrix. Delete one of the clones.')
@@ -224,4 +246,4 @@ const updatePassword = async (userId, password) => {
 }
 */
 
-module.exports = { getUserByCustomSecurityAttributeSsn, getUserByExtensionAttributeSsn, resetPassword, getAllEmployees, getAllStudents, getAuthenticationMethods, getEntraUser }
+module.exports = { getUserByCustomSecurityAttributeSsn, getUserByExtensionAttributeSsn, resetPassword, getAllEmployees, getAllStudents, getAuthenticationMethods, getEntraUser, getUserByCustomSecurityAttributeFintId }

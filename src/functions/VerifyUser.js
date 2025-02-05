@@ -3,11 +3,11 @@ const { getUserByExtensionAttributeSsn, getUserByCustomSecurityAttributeSsn } = 
 const { logger } = require('@vtfk/logger')
 const { getStateCache } = require('../state-cache')
 const { getIdPortenClient } = require('../idporten-client')
-const { IDPORTEN, DEMO_MODE } = require('../../config')
+const { IDPORTEN, DEMO_MODE, GRAPH, FINT } = require('../../config') 
 const { createLogEntry, insertLogEntry, updateLogEntry } = require('../logEntry')
 
 const maskSsn = (ssn) => {
-  return `${ssn.substring(0, 6)}*****` // 123456*****
+  return `${ssn.substring(0, 6)}*****`
 }
 
 /**
@@ -164,20 +164,44 @@ app.http('VerifyUser', {
     // Have ssn - set masked ssn as log prefix
     let logPrefix = `${user.userType} - ${user.maskedSsn} - logEntryId: ${logEntryId}`
 
-    // Fetch user from EntraId
     logger('info', [logPrefix, 'ID-porten is okey dokey, trying to fetch user from Entra ID'], context)
     try {
       let entraUser
-      if (user.userType === 'ansatt') {
-        entraUser = await getUserByExtensionAttributeSsn(user.ssn)
-      } else if (user.userType === 'elev') {
-        entraUser = await getUserByCustomSecurityAttributeSsn(user.ssn)
+      if (FINT.ENABLED) {
+        try {
+          const fintIds = await getFintPersonId(user.ssn, user.userType)
+          if (user.userType === 'ansatt' && fintIds?.ansattId) {
+            entraUser = await getUserByCustomSecurityAttributeFintId(fintIds.ansattId)
+          } else if (user.userType === 'elev' && fintIds?.elevId) {
+            entraUser = await getUserByCustomSecurityAttributeFintId(fintIds.elevId)
+          }
+        } catch (fintError) {
+          logger('warn', [logPrefix, 'FINT lookup failed, falling back to SSN and extension attribute', fintError.message], context)
+          logEntry.fint = {
+            id: null,
+            result: { status: 'error', message: fintError.message }
+          }
+        }
       }
+
+      if (!entraUser || !entraUser.id) {
+        // Fallback to SSN and extension attribute if FINT is disabled or lookup failed
+        if (user.userType === 'ansatt') {
+          entraUser = await getUserByExtensionAttributeSsn(user.ssn)
+        } else {
+          // If FINT is enabled, but no fintId is found, we should not use customSecurityAttributes/IDM/SSN
+          // This is because we don't want to mix FINT and non-FINT users
+          const { status, jsonBody } = await handleError({ error: 'Could not find entraID user on ssn', jobName: 'entraId', logEntry, logEntryId, message: 'Fant ingen bruker hos oss med ditt fødselsnummer, ta kontakt med servicedesk eller din leder dersom du mener dette er feil.', status: 404, logPrefix }, context)
+          return { status, jsonBody }
+        }
+      }
+
       // Hvis ingen bruker returner vi tidlig med beskjed
-      if (!entraUser.id) {
+      if (!entraUser || !entraUser.id) {
         const { status, jsonBody } = await handleError({ error: 'Could not find entraID user on ssn', jobName: 'entraId', logEntry, logEntryId, message: 'Fant ingen bruker hos oss med ditt fødselsnummer, ta kontakt med servicedesk eller din leder dersom du mener dette er feil.', status: 404, logPrefix }, context)
         return { status, jsonBody }
       }
+
       if (DEMO_MODE.ENABLED && DEMO_USER_OVERRIDE?.DEMO_UPN) {
         logger('warn', [logPrefix, 'DEMO_MODE is enabled, and DEMO_USER_OVERRIDE is present on idPorten pid, setting user.userPrincipalName to DEMO_USER_OVERRIDE.DEMO_UPN'], context)
         user.id = 'DEMO-ID'
