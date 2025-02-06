@@ -323,7 +323,16 @@ console.log(escaped)
     "MONGODB_DB_NAME": "onboarding-test",
     "STATISTICS_URL": "",
     "STATISTICS_KEY": "",
-    "BAD_WORDS": "kuk,fuck,knull,pule,...,pikk"
+    "BAD_WORDS": "kuk,fuck,knull,pule,...,pikk",
+    "FINT_ENABLED": false,
+    "FINT_BASE_URL": "https://play-with-fint.felleskomponent.no",
+    "FINT_CLIENT_USERNAME": "test-meg@client.fint-kontroll.no",
+    "FINT_CLIENT_PASSWORD": "",
+    "FINT_CLIENT_ID": "90ed5d83-a2ec-4804-bd3f-e4ba2f5c2af4",
+    "FINT_CLIENT_SECRET": "",
+    "FINT_CLIENT_SCOPE": "fint-client",
+    "FINT_CLIENT_IDP_URI": "https://idp.felleskomponent.no/nidp/oauth/nam/token",
+    "FINT_CLIENT_ASSET_ID": "ofk.no"
   },
   "Host": {
     "CORS": "*"
